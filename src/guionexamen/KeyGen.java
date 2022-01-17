@@ -37,7 +37,7 @@ public class KeyGen {
             //String privateKey = "llllllllllllllll";
             fileWriter("keypublic.txt", clave.getPublic().getEncoded());
             fileWriter("keyprivate.txt",clave.getPrivate().getEncoded());
-            String data = "lB2eJ0";
+            String data = "abcd*1234";
             String cypherPass=KeyManager.encrypt(data);
             System.out.println(cypherPass);
             System.out.println(KeyManager.decrypt(cypherPass));

@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
@@ -33,7 +35,7 @@ public class KeyManager {
     //private static final String ALGORITHM_STR = "AES/ECB/PKCS5Padding";
     // cifrado
     //private static byte[] salt = "esta es la salt!".getBytes();
-    public static String encrypt(String mensaje) throws Exception {
+    public static String decrypt (String mensaje) throws Exception {
         PublicKey publicKey;
         KeyFactory keyFactory;       
         byte[]key=fileReader("keypublic.txt");
@@ -43,19 +45,21 @@ public class KeyManager {
             Cipher cipherRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             X509EncodedKeySpec spec = new X509EncodedKeySpec(key);
             publicKey = keyFactory.generatePublic(spec);
-            cipherRSA.init(Cipher.ENCRYPT_MODE, publicKey);
-            encodedMessage = cipherRSA.doFinal(mensaje.getBytes());
+            cipherRSA.init(Cipher.DECRYPT_MODE, publicKey);
+            encodedMessage = cipherRSA.doFinal(hexStringToByteArray(mensaje));
             
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeySpecException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
             Logger.getLogger(KeyFactory.class.getName()).log(Level.SEVERE, null, ex);
         }
         //We use the method covertStringToHex to get the hex value of the String
-        return hexadecimal(encodedMessage);
+        System.out.println("Hasheo decrypt:"+ hashPassword(new String(encodedMessage)));
+        return new String(encodedMessage);
     }
     // descifrar
-    public static String decrypt(String password) throws Exception {
+    public static String encrypt(String password) throws Exception {
         //password=new String(hexStringToByteArray(password));
         KeyFactory factoriaRSA;
+        byte[] decodedMessage=null;
         //String path=KeyManager.class.getResource("PrivateKey.txt").getPath();
         PrivateKey privateKey;
         Cipher cipher;
@@ -66,15 +70,16 @@ public class KeyManager {
             factoriaRSA = KeyFactory.getInstance("RSA");
             privateKey = factoriaRSA.generatePrivate(spec);
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            System.out.println("Hasheo encrypt:"+ hashPassword(password));
+            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
             //Le decimos que descifre
-            byte[] decodedMessage = cipher.doFinal(hexStringToByteArray(password));
+            decodedMessage = cipher.doFinal(password.getBytes());
             // Texto descifrado
             desc = new String(decodedMessage);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
             Logger.getLogger(KeyManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return desc;
+        return hexadecimal(decodedMessage);
     }
     
     private static String convertStringToHex(String password) {
@@ -116,6 +121,20 @@ public class KeyManager {
                     + Character.digit(password.charAt(i + 1), 16));
         }
         return mensajeByte;
+    }
+    
+    public static String hashPassword(String password){
+        MessageDigest messageDigest;
+        String base64=null;
+        try {
+            messageDigest=MessageDigest.getInstance("SHA");
+            messageDigest.update(password.getBytes("UTF-8"));
+            password=new String(messageDigest.digest());
+            base64=Base64.getEncoder().encodeToString(password.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return base64;
     }
 
 
