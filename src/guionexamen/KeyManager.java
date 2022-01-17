@@ -35,6 +35,8 @@ public class KeyManager {
     //private static final String ALGORITHM_STR = "AES/ECB/PKCS5Padding";
     // cifrado
     //private static byte[] salt = "esta es la salt!".getBytes();
+    private static byte[] decodedMessage=null;
+    public static byte[] decodedMessage2=null;
     public static String decrypt (String mensaje) throws Exception {
         PublicKey publicKey;
         KeyFactory keyFactory;       
@@ -47,19 +49,19 @@ public class KeyManager {
             publicKey = keyFactory.generatePublic(spec);
             cipherRSA.init(Cipher.DECRYPT_MODE, publicKey);
             encodedMessage = cipherRSA.doFinal(hexStringToByteArray(mensaje));
+            decodedMessage2 = cipherRSA.doFinal(decodedMessage2);
+            System.out.println("Hasheo decrypt:"+ new String(decodedMessage2));
             
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeySpecException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
             Logger.getLogger(KeyFactory.class.getName()).log(Level.SEVERE, null, ex);
         }
         //We use the method covertStringToHex to get the hex value of the String
-        System.out.println("Hasheo decrypt:"+ hashPassword(new String(encodedMessage)));
         return new String(encodedMessage);
     }
     // descifrar
     public static String encrypt(String password) throws Exception {
         //password=new String(hexStringToByteArray(password));
         KeyFactory factoriaRSA;
-        byte[] decodedMessage=null;
         //String path=KeyManager.class.getResource("PrivateKey.txt").getPath();
         PrivateKey privateKey;
         Cipher cipher;
@@ -70,10 +72,12 @@ public class KeyManager {
             factoriaRSA = KeyFactory.getInstance("RSA");
             privateKey = factoriaRSA.generatePrivate(spec);
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            System.out.println("Hasheo encrypt:"+ hashPassword(password));
             cipher.init(Cipher.ENCRYPT_MODE, privateKey);
             //Le decimos que descifre
+            System.out.println("hasheo sin cifrar"+hashPassword(password));
             decodedMessage = cipher.doFinal(password.getBytes());
+            decodedMessage2 = cipher.doFinal(hashPassword(password).getBytes());
+            System.out.println("hasheo cifrado"+decodedMessage2);
             // Texto descifrado
             desc = new String(decodedMessage);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
